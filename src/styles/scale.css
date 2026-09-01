@@ -1,0 +1,233 @@
+/* ==========================================================================
+   scale.css — resolution-adaptive scale engine
+   --------------------------------------------------------------------------
+   THE MODEL
+
+                             VIEWPORT
+                                │
+                ┌───────────────┴───────────────┐
+            UI SCALE                        LAYOUT SPACE
+           --ui-base                      clamp() / vw / min()
+                │                               │
+        ┌───────┴───────┐               gutters · sections
+   rem tokens      --ui-ctl             containers · grids
+   type, gaps,     (damped +
+   icon em         capped)
+        │               │                       │
+     scalable      constrained                fluid
+    text · icons   buttons · inputs        page rhythm
+    gaps · pads    rows · navbar
+
+   The point: NOT every dimension should respond to viewport size the same way.
+   Typography scales. Controls scale less, and stop. Layout is viewport-driven.
+   ========================================================================== */
+
+:root {
+
+  /* ======================================================================
+     TIER 1 · UI SCALE  —  drives every rem token
+     ----------------------------------------------------------------------
+     Piecewise-fluid so intermediate widths (1440, 2048, 2880, 3440…)
+     interpolate instead of snapping. Segments are continuous: each band's
+     endpoint equals the next band's start, so there is no jump anywhere.
+
+        1280 → 15.75px      1920 → 16.00px  (reference: 1rem = 16px)
+        2560 → 17.67px      3840 → 21.00px
+
+     4K is 1.31x FHD, not 1.63x. Text grows enough to stay comfortable at
+     higher pixel density; it does not try to hold constant physical size.
+     ====================================================================== */
+  --ui-base: 16px;
+
+  /* User density multiplier — <html data-density="..."> */
+  --ui-density: 1;
+
+  font-size: calc(var(--ui-base) * var(--ui-density));
+
+  /* Screen class, readable from JS for debugging */
+  --screen-class: "base";
+
+  /* ======================================================================
+     TIER 2 · CONTROL SCALE  —  damped and capped
+     ----------------------------------------------------------------------
+     Controls are governed by pointer precision and information density, not
+     by reading comfort, so they must grow SLOWER than type and then stop.
+
+        0.75rem + 4px   →  grows at ~75% of the type rate
+        min(…, 22px)    →  hard ceiling for 5K/6K
+
+        root 15.75 → 15.81    root 16   → 16.00
+        root 17.67 → 17.25    root 21   → 19.75    root 24 → 22.00 (capped)
+
+     Effect: a button is 1.26x taller on 4K than FHD while its label is 1.31x
+     larger — chrome tightens as type grows, which is what "premium" looks like.
+     ====================================================================== */
+  --ui-ctl: min(calc(0.75rem + 4px), 22px);
+
+  /* ======================================================================
+     TIER 3 · FLUID LAYOUT  —  viewport-driven, deliberately root-INDEPENDENT
+     ----------------------------------------------------------------------
+     These are the only places `vw` is allowed. Extra screen space becomes
+     whitespace, wider gutters and more columns — never bigger controls.
+     ====================================================================== */
+  --gutter:     clamp(1rem, 0.4rem + 1.55vw, 4rem);
+  --layout-gap: clamp(0.85rem, 0.45rem + 0.85vw, 2rem);
+
+  /* Section rhythm answers to BOTH axes. The vw term sets the ideal; the vh
+     term takes over only when height is the scarce resource (720/768/900-tall
+     laptops). One expression, continuous everywhere — this replaces the pair
+     of max-height media queries the previous revision needed.               */
+  --section-y:  min(clamp(1.5rem, 0.6rem + 2.1vw, 4rem), 4.6vh);
+
+  /* Application shell. Below ~2120px the viewport governs (96vw); above it the
+     growth rate drops to 30vw so 4K gains margin instead of line length.
+        1366 → 1311   1920 → 1843   2560 → 2168   3840 → 2552 (max 2800)      */
+  --shell-max: min(96vw, calc(1400px + 30vw), 2800px);
+
+  /* Reading measure in `ch` — self-correcting: it IS the line length.        */
+  --prose-max: 68ch;
+
+  /* Rem-based content caps: identical visual proportion at every resolution. */
+  --content-max: 84rem;
+  --form-max:    46rem;
+  --rail-w:      17rem;
+
+  /* ======================================================================
+     TIER 4 · CONSTRAINED COMPONENT TOKENS  —  rem with a px ceiling
+     ----------------------------------------------------------------------
+     `min(<rem>, <px>)` is the whole pattern: scale normally, then stop.
+     ====================================================================== */
+
+  /* Hairlines: never sub-pixel, never chunky. */
+  --hairline: max(1px, 0.065rem);
+  --ring:     max(1px, 0.085rem);
+
+  /* Radii — the token most obviously wrong when multiplied 1.6x */
+  --radius-xs:   min(0.25rem,   5px);
+  --radius-sm:   min(0.375rem,  7px);
+  --radius-md:   min(0.625rem, 11px);
+  --radius-lg:   min(0.875rem, 17px);
+  --radius-xl:   min(1.25rem,  24px);
+  --radius-pill: 999rem;
+
+  /* Control geometry — all derived from --ui-ctl, all capped */
+  --ctl-h-xs:  calc(1.55 * var(--ui-ctl));
+  --ctl-h-sm:  calc(1.90 * var(--ui-ctl));
+  --ctl-h:     calc(2.25 * var(--ui-ctl));
+  --ctl-h-lg:  calc(2.70 * var(--ui-ctl));
+  --ctl-h-xl:  calc(3.15 * var(--ui-ctl));
+  --input-h:   calc(2.40 * var(--ui-ctl));
+
+  /* Chrome heights — three-way min: control scale, absolute ceiling, and a
+     vh term that only binds on short viewports.
+        720h -> 47.5   768h -> 50.7   1080h -> 54.4   2160h -> 66 (capped)   */
+  --nav-h:     min(calc(3.4 * var(--ui-ctl)), 66px, 6.6vh);
+  --row-py:    calc(0.45 * var(--ui-ctl));
+  --row-px:    calc(0.72 * var(--ui-ctl));
+  --card-pad:  min(calc(1.15 * var(--ui-ctl)), 26px);
+  --panel-pad: min(calc(1.05 * var(--ui-ctl)), 24px);
+
+  /* Standalone (non-inline) icon surfaces. Inline icons use `em` and follow
+     their own text; only decorative tiles need an absolute ceiling.          */
+  --icon-tile:  min(calc(2.5 * var(--ui-ctl)), 50px);
+  --avatar:     calc(2 * var(--ui-ctl));
+  --scrollbar:  min(0.5rem, 12px);
+
+  /* Overlay sizing — rem for proportion, px for the 5K ceiling, vw for safety */
+  --modal-sm: min(24rem, 480px, calc(100vw - 2 * var(--gutter)));
+  --modal-md: min(34rem, 700px, calc(100vw - 2 * var(--gutter)));
+  --modal-lg: min(48rem, 980px, calc(100vw - 2 * var(--gutter)));
+  --drawer-w: min(20rem, 400px, 86vw);
+
+  /* Elevation follows the control scale, not the type scale */
+  --shadow-sm: 0 calc(0.06 * var(--ui-ctl)) calc(0.12 * var(--ui-ctl)) rgb(0 0 0 / 0.14);
+  --shadow-md: 0 calc(0.25 * var(--ui-ctl)) calc(0.75 * var(--ui-ctl)) rgb(0 0 0 / 0.16),
+               0 calc(0.06 * var(--ui-ctl)) calc(0.12 * var(--ui-ctl)) rgb(0 0 0 / 0.10);
+  --shadow-lg: 0 calc(0.9  * var(--ui-ctl)) calc(2.2  * var(--ui-ctl)) rgb(0 0 0 / 0.22),
+               0 calc(0.25 * var(--ui-ctl)) calc(0.75 * var(--ui-ctl)) rgb(0 0 0 / 0.12);
+}
+
+/* ==========================================================================
+   THE CURVE
+   Four continuous segments. Each clamp's min equals the previous segment's
+   max, so the value is C0-continuous across the whole range — no jumps.
+
+   These are SCALE bands, not layout breakpoints. Layout breakpoints live in
+   the components and are deliberately few (see components.css).
+   ========================================================================== */
+
+/* Phone / small tablet — 16px floor, below which iOS zooms form fields */
+@media (max-width: 47.999em) {
+  :root { --ui-base: 16px; --screen-class: "sm"; --shell-max: 100%; }
+}
+
+/* Tablet → small laptop:  768px = 15.25  →  1280px = 15.75 */
+@media (min-width: 48em) {
+  :root { --ui-base: clamp(15.25px, 14.5px + 0.09766vw, 15.75px); --screen-class: "md"; }
+}
+
+/* HD → FHD:  1280px = 15.75  →  1920px = 16.00 */
+@media (min-width: 1280px) {
+  :root { --ui-base: clamp(15.75px, 15.25px + 0.0390625vw, 16px); --screen-class: "hd"; }
+}
+@media (min-width: 1600px) { :root { --screen-class: "hd+"; } }
+
+/* FHD → 4K:  1920px = 16.00  →  3840px = 21.00  (2560 lands at 17.67) */
+@media (min-width: 1728px) {
+  :root { --ui-base: clamp(16px, 11px + 0.260417vw, 21px); --screen-class: "fhd"; }
+}
+@media (min-width: 2304px) { :root { --screen-class: "2k"; } }
+
+/* 4K and beyond:  3840px = 21.00  →  5120px = 24.00, then flat */
+@media (min-width: 3456px) {
+  :root { --ui-base: clamp(21px, 12px + 0.234375vw, 24px); --screen-class: "4k"; }
+}
+@media (min-width: 5000px) { :root { --screen-class: "5k+"; } }
+
+/* --------------------------------------------------------------------------
+   NOTE — there are deliberately NO max-height media queries here.
+   Short viewports (1280x720, 1366x768, 1600x900, any 1080p window carrying
+   browser chrome and a taskbar) are handled by the vh terms inside --nav-h
+   and --section-y. A stepped multiplier produced a visible 16% jump between
+   1600x900 and 1920x1080; min() interpolates instead.
+
+   Type is never shrunk to win vertical space: trading legibility for 30px of
+   height is a bad deal, and it was the bug in the previous revision.
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   SCALE MODES
+   Default is the fluid curve above — smooth at every intermediate width.
+   `data-scale="stepped"` snaps to one value per band: predictable, easy to
+   reason about in a spec, and useful when QA needs reproducible numbers.
+   `data-scale="fluid"` is accepted as an explicit no-op for compatibility.
+   -------------------------------------------------------------------------- */
+@media (min-width: 48em)   { html[data-scale="stepped"] { --ui-base: 15.25px; } }
+@media (min-width: 1280px) { html[data-scale="stepped"] { --ui-base: 15.75px; } }
+@media (min-width: 1728px) { html[data-scale="stepped"] { --ui-base: 16px;    } }
+@media (min-width: 2304px) { html[data-scale="stepped"] { --ui-base: 17.75px; } }
+@media (min-width: 3456px) { html[data-scale="stepped"] { --ui-base: 21px;    } }
+@media (min-width: 5000px) { html[data-scale="stepped"] { --ui-base: 24px;    } }
+
+/* --------------------------------------------------------------------------
+   Density — <html data-density="compact | comfortable | spacious">
+   One multiplier on the root; every tier inherits it because --ui-ctl and the
+   rem tokens are all root-relative. Fluid layout tokens are intentionally
+   NOT affected: density is a UI concern, not a page-layout concern.
+   -------------------------------------------------------------------------- */
+html[data-density="compact"]     { --ui-density: 0.93; }
+html[data-density="comfortable"] { --ui-density: 1; }
+html[data-density="spacious"]    { --ui-density: 1.08; }
+
+/* -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  :root { --ui-base: 11px; --shell-max: 100%; --gutter: 0; --section-y: 0.75rem; }
+}

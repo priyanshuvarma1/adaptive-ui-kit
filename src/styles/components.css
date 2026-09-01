@@ -1,0 +1,422 @@
+/* ==========================================================================
+   components.css — portable component layer
+
+   Each block is annotated with the tier that governs it:
+     [SCALE]       rem / em  — follows --ui-base (type, gaps, inline icons)
+     [CONTROL]     --ui-ctl  — damped + capped (buttons, inputs, rows, chrome)
+     [FLUID]       clamp/vw  — viewport-driven (gutters, sections, grids)
+     [CONSTRAINED] min(rem,px) — scales then stops (radii, tiles, overlays)
+
+   `vw` appears ONLY in [FLUID] blocks. No component internal uses it.
+   ========================================================================== */
+
+@layer components {
+
+  /* ============================== [FLUID] shell ========================== */
+  .ui-shell {
+    width: 100%;
+    max-width: var(--shell-max);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  /* Narrower rail for reading / card content. rem-based, so a card column is
+     the same visual width at 1366 and 3840 — the surplus becomes margin.    */
+  .ui-content { width: 100%; max-width: var(--content-max); margin-inline: auto; }
+  .ui-prose   { max-width: var(--prose-max); }   /* 68ch — a real measure     */
+  .ui-form    { max-width: var(--form-max); }
+  .ui-section { padding-block: var(--section-y); }
+
+  /* ============================== [FLUID] grids =========================
+     Extra viewport space becomes MORE COLUMNS, not wider cards.
+     --col-min is rem, so the point at which a new column appears scales with
+     the UI rather than with a hard pixel number.
+     ====================================================================== */
+  .ui-grid {
+    /* --col-min  : rem width below which a column is dropped. The threshold
+                    scales with the UI, so it is not a hardcoded pixel number.
+       --col-max  : leave at 1fr in almost all cases — tracks then share the
+                    container, and you cap the CONTAINER (.ui-content) instead.
+                    Set a length only for a grid that must never fill its row. */
+    --col-min: 18rem;
+    --col-max: 1fr;
+    display: grid;
+    gap: var(--layout-gap);
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--col-min), 100%), var(--col-max)));
+    align-items: start;
+    justify-content: center;
+  }
+
+  /* ============================== [SCALE] icons ==========================
+     Inline icons are `em`: they follow the text they sit beside, at every
+     resolution, with one class. Stroke width steps down as the glyph grows so
+     optical weight stays constant. No px, and no cap needed — the cap is
+     inherited from whatever text the icon is next to.
+     ====================================================================== */
+  .ui-icon      { width: 1.15em; height: 1.15em; flex: none; stroke-width: 1.9; }
+  .ui-icon-sm   { width: 1em;    height: 1em;    flex: none; stroke-width: 2.1; }
+  .ui-icon-lg   { width: 1.4em;  height: 1.4em;  flex: none; stroke-width: 1.75; }
+  .ui-icon-xl   { width: 2em;    height: 2em;    flex: none; stroke-width: 1.5; }
+
+  /* [CONSTRAINED] standalone tile — decorative, so it gets an absolute cap */
+  .ui-icon-tile {
+    display: inline-grid; place-items: center; flex: none;
+    width: var(--icon-tile); height: var(--icon-tile);
+    border-radius: var(--radius-md);
+    font-size: min(1rem, 20px);          /* caps the em-sized glyph inside */
+  }
+
+  /* ============================= [CONTROL] buttons =======================
+     Padding and min-height come from --ui-ctl; the LABEL comes from the type
+     scale. Chrome therefore tightens around the text as the screen grows,
+     instead of the whole button inflating.
+     ====================================================================== */
+  .ui-btn {
+    --btn-py: calc(0.50 * var(--ui-ctl));
+    --btn-px: calc(0.90 * var(--ui-ctl));
+    --btn-h:  var(--ctl-h);
+    --btn-fs: var(--text-sm);
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.45em;
+    min-height: var(--btn-h);
+    padding: var(--btn-py) var(--btn-px);
+    font-size: var(--btn-fs); font-weight: 550; line-height: 1.25;
+    letter-spacing: -0.005em;
+    border-radius: var(--radius-md);
+    border: var(--hairline) solid transparent;
+    cursor: pointer; white-space: nowrap; user-select: none;
+    transition: background-color .16s var(--ease-out-soft),
+                border-color .16s var(--ease-out-soft),
+                color .16s var(--ease-out-soft),
+                transform .12s var(--ease-out-soft);
+  }
+  .ui-btn:active:not(:disabled) { transform: translateY(max(1px, 0.05rem)); }
+  .ui-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ui-btn:focus-visible { outline: var(--ring) solid var(--color-accent); outline-offset: 0.125rem; }
+
+  .ui-btn-xs { --btn-py: calc(0.26 * var(--ui-ctl)); --btn-px: calc(0.55 * var(--ui-ctl));
+               --btn-h: var(--ctl-h-xs); --btn-fs: var(--text-2xs); }
+  .ui-btn-sm { --btn-py: calc(0.38 * var(--ui-ctl)); --btn-px: calc(0.72 * var(--ui-ctl));
+               --btn-h: var(--ctl-h-sm); --btn-fs: var(--text-xs); }
+  .ui-btn-lg { --btn-py: calc(0.62 * var(--ui-ctl)); --btn-px: calc(1.15 * var(--ui-ctl));
+               --btn-h: var(--ctl-h-lg); --btn-fs: var(--text-base); }
+  .ui-btn-xl { --btn-py: calc(0.78 * var(--ui-ctl)); --btn-px: calc(1.50 * var(--ui-ctl));
+               --btn-h: var(--ctl-h-xl); --btn-fs: var(--text-lg); }
+  .ui-btn-icon { --btn-px: var(--btn-py); aspect-ratio: 1; }
+
+  .ui-btn-primary { background: var(--color-accent); color: var(--color-ink-invert); }
+  .ui-btn-primary:hover:not(:disabled) { background: var(--color-accent-hov); }
+
+  .ui-btn-secondary { background: var(--color-surface-2); color: var(--color-ink);
+                      border-color: var(--color-line); }
+  .ui-btn-secondary:hover:not(:disabled) { background: var(--color-surface-3);
+                      border-color: var(--color-line-strong); }
+
+  .ui-btn-ghost { background: transparent; color: var(--color-ink-2); }
+  .ui-btn-ghost:hover:not(:disabled) { background: var(--color-surface-2); color: var(--color-ink); }
+
+  .ui-btn-danger { background: var(--color-danger); color: oklch(0.99 0 0); }
+  .ui-btn-danger:hover:not(:disabled) { filter: brightness(1.08); }
+
+  .ui-btn-link { background: none; padding: 0; min-height: 0; color: var(--color-accent-ink);
+                 text-underline-offset: 0.2em; }
+  .ui-btn-link:hover:not(:disabled) { text-decoration: underline; }
+
+  /* ============================== [SCALE] badges =========================
+     Padding is `em`, so a badge is always proportional to its own label — it
+     needs no tier of its own and never has to be re-tuned.
+     ====================================================================== */
+  .ui-badge {
+    display: inline-flex; align-items: center; gap: 0.35em;
+    padding: 0.22em 0.62em;
+    font-size: var(--text-2xs); font-weight: 600; line-height: 1.45;
+    letter-spacing: 0.01em;
+    border-radius: var(--radius-pill);
+    border: var(--hairline) solid transparent;
+    white-space: nowrap;
+  }
+  .ui-badge-neutral { background: var(--color-surface-3); color: var(--color-ink-2); }
+  .ui-badge-accent  { background: var(--color-accent-soft); color: var(--color-accent-ink); }
+  .ui-badge-ok      { background: var(--color-ok-soft);     color: var(--color-ok); }
+  .ui-badge-warn    { background: var(--color-warn-soft);   color: var(--color-warn); }
+  .ui-badge-danger  { background: var(--color-danger-soft); color: var(--color-danger); }
+  .ui-badge-dot::before { content:""; width:0.45em; height:0.45em; border-radius:999px;
+                          background: currentColor; }
+
+  /* ========================= [CONTROL] cards & panels ==================== */
+  .ui-card {
+    background: var(--color-surface);
+    border: var(--hairline) solid var(--color-line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .ui-card-pad  { padding: var(--card-pad); }
+  .ui-card-head { display:flex; align-items:flex-start; justify-content:space-between;
+                  gap: 0.75rem;
+                  padding: calc(0.85 * var(--card-pad)) var(--card-pad);
+                  border-bottom: var(--hairline) solid var(--color-line); }
+  .ui-card-body { padding: var(--card-pad); }
+  .ui-card-foot { padding: calc(0.72 * var(--card-pad)) var(--card-pad);
+                  background: var(--color-surface-2);
+                  border-top: var(--hairline) solid var(--color-line); }
+  .ui-card-hover { transition: box-shadow .2s var(--ease-out-soft),
+                               border-color .2s var(--ease-out-soft),
+                               transform .2s var(--ease-out-soft); }
+  .ui-card-hover:hover { box-shadow: var(--shadow-md);
+                         border-color: var(--color-line-strong);
+                         transform: translateY(max(-2px, -0.11rem)); }
+
+  .ui-panel { background: var(--color-surface);
+              border: var(--hairline) solid var(--color-line);
+              border-radius: var(--radius-lg); }
+  .ui-panel-head { display:flex; align-items:center; justify-content:space-between;
+                   gap: 0.75rem;
+                   min-height: calc(2.9 * var(--ui-ctl));
+                   padding: calc(0.5 * var(--panel-pad)) var(--panel-pad);
+                   border-bottom: var(--hairline) solid var(--color-line); }
+  .ui-panel-body { padding: var(--panel-pad); }
+
+  /* ============================= [CONTROL] table ========================
+     Row height is driven by --row-py plus the line box, so rows grow ~1.27x
+     from FHD to 4K while text grows 1.31x: a 4K screen shows MORE rows than
+     FHD, not the same rows stretched.
+     ====================================================================== */
+  .ui-table-wrap { border: var(--hairline) solid var(--color-line);
+                   border-radius: var(--radius-lg);
+                   background: var(--color-surface); overflow: hidden; }
+  .ui-table-scroll { overflow-x: auto; }
+  .ui-table { width: 100%; border-collapse: separate; border-spacing: 0;
+              font-size: var(--text-sm); }
+  .ui-table thead th {
+    position: sticky; top: 0; z-index: 1;
+    background: var(--color-surface-2);
+    padding: calc(0.62 * var(--ui-ctl)) var(--row-px);
+    font-size: var(--text-2xs); font-weight: 650;
+    letter-spacing: 0.055em; text-transform: uppercase;
+    color: var(--color-ink-3); text-align: left; white-space: nowrap;
+    border-bottom: var(--hairline) solid var(--color-line);
+  }
+  .ui-table tbody td { padding: var(--row-py) var(--row-px); vertical-align: middle;
+                       border-bottom: var(--hairline) solid var(--color-line);
+                       color: var(--color-ink-2); }
+  .ui-table tbody tr:last-child td { border-bottom: 0; }
+  .ui-table tbody tr:hover td { background: var(--color-surface-2); }
+  .ui-table-num { text-align: right; font-variant-numeric: tabular-nums;
+                  font-feature-settings: "tnum"; }
+  .ui-table-compact thead th { padding: calc(0.42 * var(--ui-ctl)) calc(0.55 * var(--ui-ctl)); }
+  .ui-table-compact tbody td { padding: calc(0.32 * var(--ui-ctl)) calc(0.55 * var(--ui-ctl)); }
+
+  /* ============================= [CONTROL] forms ======================== */
+  .ui-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .ui-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-ink-2); }
+  .ui-hint  { font-size: var(--text-2xs); color: var(--color-ink-3); }
+  .ui-input {
+    width: 100%;
+    min-height: var(--input-h);
+    padding: calc(0.42 * var(--ui-ctl)) calc(0.72 * var(--ui-ctl));
+    font-size: var(--text-sm); line-height: 1.5;
+    color: var(--color-ink);
+    background: var(--color-surface);
+    border: var(--hairline) solid var(--color-line-strong);
+    border-radius: var(--radius-md);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .ui-input::placeholder { color: var(--color-ink-3); }
+  .ui-input:focus { outline: none; border-color: var(--color-accent);
+                    box-shadow: 0 0 0 var(--ring) var(--color-accent); }
+  .ui-input-lg { min-height: var(--ctl-h-lg);
+                 padding: calc(0.58 * var(--ui-ctl)) calc(0.9 * var(--ui-ctl));
+                 font-size: var(--text-base); }
+  textarea.ui-input { min-height: 0; }
+
+  .ui-switch { position: relative; display: inline-flex; flex: none;
+               width: calc(2.1 * var(--ui-ctl)); height: calc(1.2 * var(--ui-ctl));
+               border-radius: var(--radius-pill);
+               background: var(--color-surface-3); cursor: pointer;
+               border: var(--hairline) solid var(--color-line-strong);
+               transition: background-color .18s var(--ease-out-soft); }
+  .ui-switch::after { content:""; position:absolute; top:50%; left: calc(0.11 * var(--ui-ctl));
+               translate: 0 -50%;
+               width: calc(0.86 * var(--ui-ctl)); height: calc(0.86 * var(--ui-ctl));
+               border-radius: 999px; background: var(--color-surface);
+               box-shadow: var(--shadow-sm);
+               transition: left .18s var(--ease-out-soft); }
+  .ui-switch[data-on="true"] { background: var(--color-accent); border-color: transparent; }
+  .ui-switch[data-on="true"]::after { left: calc(100% - 0.97 * var(--ui-ctl)); }
+
+  /* ========================== [CONTROL] navigation ======================
+     --nav-h has a hard 66px ceiling AND a short-viewport multiplier, so the
+     bar is 46px on a 1366x768 laptop and 66px on 4K — never 91px.
+     ====================================================================== */
+  .ui-navbar {
+    position: sticky; top: 0; z-index: 40;
+    height: var(--nav-h);
+    display: flex; align-items: center;
+    background: color-mix(in oklab, var(--color-surface) 82%, transparent);
+    backdrop-filter: blur(min(0.75rem, 14px)) saturate(1.4);
+    border-bottom: var(--hairline) solid var(--color-line);
+  }
+  .ui-navlink {
+    display: inline-flex; align-items: center; gap: 0.4em;
+    min-height: var(--ctl-h-sm);
+    padding: calc(0.3 * var(--ui-ctl)) calc(0.62 * var(--ui-ctl));
+    font-size: var(--text-sm); font-weight: 520;
+    color: var(--color-ink-2);
+    border-radius: var(--radius-sm);
+    transition: background-color .15s, color .15s;
+  }
+  .ui-navlink:hover { background: var(--color-surface-2); color: var(--color-ink); }
+  .ui-navlink[aria-current="page"] { background: var(--color-accent-soft);
+                                     color: var(--color-accent-ink); }
+  /* Brand mark is chrome, not type — [CONSTRAINED] */
+  .ui-brand-mark { display:grid; place-items:center; flex:none;
+                   width: calc(1.75 * var(--ui-ctl)); height: calc(1.75 * var(--ui-ctl));
+                   border-radius: var(--radius-sm);
+                   font-size: min(0.8rem, 15px); font-weight: 700; }
+
+  /* ======================= [CONTROL] hamburger / drawer ================== */
+  .ui-burger { display: inline-grid; place-items: center; flex: none;
+               width: var(--ctl-h); height: var(--ctl-h);
+               border-radius: var(--radius-md); cursor: pointer; }
+  .ui-burger:hover { background: var(--color-surface-2); }
+  .ui-burger-box { position: relative;
+                   width: calc(0.72 * var(--ui-ctl)); height: calc(0.48 * var(--ui-ctl)); }
+  .ui-burger-bar { position: absolute; left: 0; width: 100%;
+                   height: max(1.5px, 0.085rem); border-radius: 999px;
+                   background: var(--color-ink);
+                   transition: translate .22s var(--ease-out-soft),
+                               rotate .22s var(--ease-out-soft),
+                               opacity .14s linear; }
+  .ui-burger-bar:nth-child(1) { top: 0; }
+  .ui-burger-bar:nth-child(2) { top: 50%; translate: 0 -50%; }
+  .ui-burger-bar:nth-child(3) { bottom: 0; }
+  .ui-burger[data-open="true"] .ui-burger-bar:nth-child(1) { top:50%; translate: 0 -50%; rotate: 45deg; }
+  .ui-burger[data-open="true"] .ui-burger-bar:nth-child(2) { opacity: 0; }
+  .ui-burger[data-open="true"] .ui-burger-bar:nth-child(3) { bottom:50%; translate: 0 50%; rotate: -45deg; }
+
+  .ui-scrim { position: fixed; inset: 0; z-index: 50;
+              background: color-mix(in oklab, oklch(0.15 0.02 265) 55%, transparent);
+              backdrop-filter: blur(2px);
+              animation: ui-fade .18s var(--ease-out-soft); }
+  /* [CONSTRAINED] drawer — rem for proportion, px ceiling, vw for safety */
+  .ui-drawer { position: fixed; inset-block: 0; left: 0; z-index: 51;
+               width: var(--drawer-w);
+               display: flex; flex-direction: column;
+               background: var(--color-surface);
+               border-right: var(--hairline) solid var(--color-line);
+               box-shadow: var(--shadow-lg);
+               animation: ui-slide-in .24s var(--ease-out-soft); }
+
+  /* ========================== [CONSTRAINED] modal ======================= */
+  .ui-modal { position: fixed; z-index: 51;
+              left: 50%; top: 50%; translate: -50% -50%;
+              width: var(--modal-md);
+              max-height: min(86vh, 52rem);
+              display: flex; flex-direction: column;
+              background: var(--color-surface);
+              border: var(--hairline) solid var(--color-line);
+              border-radius: var(--radius-xl);
+              box-shadow: var(--shadow-lg);
+              animation: ui-pop .2s var(--ease-out-soft); }
+  .ui-modal-sm { width: var(--modal-sm); }
+  .ui-modal-lg { width: var(--modal-lg); }
+  .ui-modal-head { display:flex; align-items:flex-start; justify-content:space-between;
+                   gap: 1rem;
+                   padding: var(--card-pad) var(--card-pad) calc(0.6 * var(--card-pad)); }
+  .ui-modal-body { padding-inline: var(--card-pad); overflow-y: auto; }
+  .ui-modal-foot { display:flex; justify-content:flex-end; gap: 0.5rem;
+                   padding: var(--card-pad); }
+
+  /* ========================= [CONSTRAINED] popover ====================== */
+  .ui-popover { position: absolute; z-index: 45;
+                min-width: min(12rem, 240px);
+                padding: calc(0.22 * var(--ui-ctl));
+                background: var(--color-surface);
+                border: var(--hairline) solid var(--color-line);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-lg);
+                animation: ui-pop .14s var(--ease-out-soft); }
+  .ui-menuitem { display: flex; align-items: center; gap: 0.55em; width: 100%;
+                 min-height: var(--ctl-h-sm);
+                 padding: calc(0.3 * var(--ui-ctl)) calc(0.55 * var(--ui-ctl));
+                 border-radius: var(--radius-sm);
+                 font-size: var(--text-sm); color: var(--color-ink-2);
+                 text-align: left; cursor: pointer; }
+  .ui-menuitem:hover { background: var(--color-surface-2); color: var(--color-ink); }
+
+  .ui-tooltip { position: absolute; z-index: 60; pointer-events: none;
+                padding: 0.3em 0.55em;
+                font-size: var(--text-2xs); font-weight: 500;
+                color: var(--color-ink-invert);
+                background: var(--color-ink);
+                border-radius: var(--radius-sm);
+                white-space: nowrap; box-shadow: var(--shadow-md); }
+
+  /* ============================ [SCALE] media =========================== */
+  .ui-media { position: relative; overflow: hidden; background: var(--color-surface-3); }
+  .ui-media > img, .ui-media > svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* [CONSTRAINED] avatars — chrome, so --ui-ctl not the type scale */
+  .ui-avatar { display:inline-grid; place-items:center; flex:none;
+               width: var(--avatar); height: var(--avatar); border-radius: 999px;
+               font-size: min(0.7rem, 13px); font-weight: 650;
+               overflow: hidden; background: var(--color-surface-3);
+               color: var(--color-ink-2);
+               border: var(--hairline) solid var(--color-line); }
+  .ui-avatar-sm { width: calc(1.5 * var(--ui-ctl));  height: calc(1.5 * var(--ui-ctl));
+                  font-size: min(0.58rem, 11px); }
+  .ui-avatar-lg { width: calc(2.75 * var(--ui-ctl)); height: calc(2.75 * var(--ui-ctl));
+                  font-size: min(0.9rem, 17px); }
+  .ui-avatar-xl { width: calc(4 * var(--ui-ctl));    height: calc(4 * var(--ui-ctl));
+                  font-size: min(1.25rem, 24px); }
+  .ui-avatar-stack > * + * { margin-left: calc(-0.5 * var(--ui-ctl)); }
+  .ui-avatar-stack > *     { box-shadow: 0 0 0 var(--ring) var(--color-surface); }
+
+  .ui-ring-accent { box-shadow: 0 0 0 var(--ring) var(--color-accent), var(--shadow-md); }
+  .ui-row-active  { background: var(--color-accent-soft); }
+
+  /* =========================== [CONTROL] progress ======================= */
+  .ui-progress { height: calc(0.25 * var(--ui-ctl)); border-radius: 999px; overflow: hidden;
+                 background: var(--color-surface-3); }
+  .ui-progress > span { display:block; height:100%; border-radius: inherit;
+                        background: var(--color-accent);
+                        transition: width .4s var(--ease-out-soft); }
+
+  /* ============================= [CONTROL] tabs ========================= */
+  .ui-tabs { display: inline-flex; gap: max(1px, 0.06rem);
+             padding: calc(0.16 * var(--ui-ctl));
+             background: var(--color-surface-2);
+             border: var(--hairline) solid var(--color-line);
+             border-radius: var(--radius-md); }
+  .ui-tab { display: inline-flex; align-items: center;
+            min-height: calc(1.6 * var(--ui-ctl));
+            padding: calc(0.22 * var(--ui-ctl)) calc(0.62 * var(--ui-ctl));
+            font-size: var(--text-xs); font-weight: 560;
+            color: var(--color-ink-3); border-radius: var(--radius-sm);
+            cursor: pointer; white-space: nowrap;
+            transition: background-color .15s, color .15s; }
+  .ui-tab:hover { color: var(--color-ink); }
+  .ui-tab[aria-selected="true"] { background: var(--color-surface); color: var(--color-ink);
+                                  box-shadow: var(--shadow-sm); }
+
+  /* ================================ misc =============================== */
+  .ui-kbd { display:inline-block; padding: 0.12em 0.4em; font-family: var(--font-mono);
+            font-size: 0.85em; line-height: 1.4; color: var(--color-ink-2);
+            background: var(--color-surface-2);
+            border: var(--hairline) solid var(--color-line-strong);
+            border-bottom-width: max(2px, 0.12rem);
+            border-radius: var(--radius-xs); }
+  .ui-divider { height: var(--hairline); background: var(--color-line); border: 0; }
+  .ui-skeleton { background: linear-gradient(90deg,
+                   var(--color-surface-2) 25%, var(--color-surface-3) 37%,
+                   var(--color-surface-2) 63%);
+                 background-size: 400% 100%;
+                 animation: ui-shimmer 1.4s ease infinite;
+                 border-radius: var(--radius-sm); }
+}
+
+/* ------------------------------------------------------------- keyframes */
+@keyframes ui-fade     { from { opacity: 0 } to { opacity: 1 } }
+@keyframes ui-pop      { from { opacity: 0; scale: 0.97 } to { opacity: 1; scale: 1 } }
+@keyframes ui-slide-in { from { translate: -100% 0 }  to { translate: 0 0 } }
+@keyframes ui-shimmer  { from { background-position: 100% 0 } to { background-position: 0 0 } }

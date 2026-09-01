@@ -1,0 +1,67 @@
+<!doctype html>
+<!--
+  Measurement harness — dev server only:  npm run dev  →  /probe.html
+  Renders one of each component and prints resolved pixel values into #probe.
+  Drive it headlessly to validate the scale system across resolutions:
+
+    tools/measure.sh http://localhost:5173/probe.html 1366x768 1920x1080 3840x2160
+-->
+<html class="dark"><head><meta charset="utf-8"><title>Scale probe</title>
+<script type="module" src="/src/probe.js"></script></head>
+<body>
+<nav class="ui-navbar"><div class="ui-shell"><a class="ui-navlink">Nav</a></div></nav>
+<main class="ui-shell"><section class="ui-section">
+  <button class="ui-btn ui-btn-primary" id="btn">Button</button>
+  <button class="ui-btn ui-btn-sm ui-btn-secondary" id="btnsm">Small</button>
+  <input class="ui-input" id="inp" value="x">
+  <div class="ui-card ui-card-pad" id="card">card</div>
+  <div class="ui-panel"><div class="ui-panel-head" id="phead">head</div></div>
+  <span class="ui-icon-tile" id="tile"></span>
+  <span class="ui-avatar" id="av">A</span>
+  <span class="ui-badge ui-badge-accent" id="badge">badge</span>
+  <div class="ui-tabs"><button class="ui-tab" id="tab">tab</button></div>
+  <div class="ui-table-wrap"><table class="ui-table"><thead><tr><th id="th">H</th></tr></thead>
+    <tbody><tr><td id="td">cell</td></tr></tbody></table></div>
+  <p id="body">body</p><span id="xs" class="text-xs">xs</span>
+  <span id="x2s" class="text-2xs">2xs</span><span id="h2" class="ui-h2">h2</span>
+  <p class="ui-prose" id="prose">measure</p>
+  <div class="ui-content" id="content"></div>
+  <div class="ui-modal" id="modal" style="animation:none"></div>
+  <aside class="ui-drawer" id="drawer" style="animation:none"></aside>
+</section></main>
+<pre id="probe"></pre>
+<script>
+// ?scale=stepped / ?density=compact / ?theme=light  — exercise every mode
+const q = new URLSearchParams(location.search);
+if (q.get('scale'))   document.documentElement.dataset.scale = q.get('scale');
+if (q.get('density')) document.documentElement.dataset.density = q.get('density');
+if (q.get('theme'))   document.documentElement.classList.toggle('dark', q.get('theme') !== 'light');
+// Overlays get animation:none above — under --virtual-time-budget the pop
+// keyframe can stay parked at scale(.97), which under-reports modal width by 3%.
+addEventListener('load', () => setTimeout(() => {
+  const px = (el,p)=>parseFloat(getComputedStyle(el)[p]).toFixed(1);
+  const w  = id=>document.getElementById(id).getBoundingClientRect().width.toFixed(1);
+  const h  = id=>document.getElementById(id).getBoundingClientRect().height.toFixed(1);
+  const $  = id=>document.getElementById(id);
+  // Custom properties are token streams, not lengths — resolve by measuring.
+  const resolve = v => { const d=document.createElement('div');
+    d.style.cssText='position:absolute;visibility:hidden;height:var('+v+')';
+    document.body.appendChild(d); const r=d.getBoundingClientRect().height; d.remove(); return r.toFixed(2); };
+  document.getElementById('probe').textContent = [
+    'root='+px(document.documentElement,'fontSize'), 'ctl='+resolve('--ui-ctl'),
+    '2xs='+px($('x2s'),'fontSize'), 'xs='+px($('xs'),'fontSize'),
+    'body='+px($('body'),'fontSize'), 'h2='+px($('h2'),'fontSize'),
+    'btnH='+h('btn'), 'btnSmH='+h('btnsm'), 'inpH='+h('inp'),
+    'navH='+document.querySelector('.ui-navbar').getBoundingClientRect().height.toFixed(1),
+    'panelHead='+h('phead'), 'cardPad='+px($('card'),'paddingTop'),
+    'radLg='+px($('card'),'borderTopLeftRadius'),
+    'tile='+w('tile'), 'avatar='+w('av'), 'badgeH='+h('badge'), 'tabH='+h('tab'),
+    'thH='+h('th'), 'rowH='+h('td'),
+    'shell='+document.querySelector('main.ui-shell').getBoundingClientRect().width.toFixed(0),
+    'content='+w('content'), 'prose='+w('prose'),
+    'modal='+w('modal'), 'drawer='+w('drawer'),
+    'gutter='+px(document.querySelector('main.ui-shell'),'paddingLeft'),
+    'secY='+px(document.querySelector('.ui-section'),'paddingTop'),
+  ].join('  ');
+}, 400));
+</script></body></html>

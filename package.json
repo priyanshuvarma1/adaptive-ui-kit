@@ -1,0 +1,24 @@
+{
+  "name": "adaptive-ui-kit",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Resolution-adaptive React + Tailwind component kit (HD / FHD / 2K / 4K)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "measure": "tools/measure.sh http://localhost:5173/probe.html 1280x720 1366x768 1440x900 1600x900 1920x1080 2048x1152 2560x1440 2880x1620 3440x1440 3840x2160"
+  },
+  "dependencies": {
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "vite": "^6.0.7"
+  }
+}

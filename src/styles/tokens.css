@@ -1,0 +1,109 @@
+/* ==========================================================================
+   tokens.css — design tokens exposed to Tailwind v4 via @theme
+   Colors are semantic (surface / ink / accent), so a new project only has to
+   re-point ~12 variables to get a whole new look.
+   ========================================================================== */
+
+@theme {
+  /* ==================== FOUNDATION · TYPE SCALE ==========================
+     Fixed rem ratios. These NEVER get their own clamp() — the whole point is
+     that the relationships below are invariant at every resolution; only the
+     root they multiply changes.
+
+     The bottom two rungs were lifted from 0.6875/0.78125: at HD they were
+     rendering at 11.1px and 12.5px, which is where legibility actually breaks.
+     Ratio to --text-base is what matters, and it is preserved.
+     ====================================================================== */
+  --text-2xs: 0.75rem;     --text-2xs--line-height: 1.45;
+  --text-xs:  0.8125rem;   --text-xs--line-height: 1.45;
+  --text-sm:  0.875rem;    --text-sm--line-height: 1.5;
+  --text-base:1rem;        --text-base--line-height: 1.6;
+  --text-lg:  1.125rem;    --text-lg--line-height: 1.5;
+  --text-xl:  1.375rem;    --text-xl--line-height: 1.4;
+  --text-2xl: 1.75rem;     --text-2xl--line-height: 1.28;
+  --text-3xl: 2.25rem;     --text-3xl--line-height: 1.18;
+  --text-4xl: 2.875rem;    --text-4xl--line-height: 1.1;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+  /* ---------- Radii live in scale.css (:root beats the theme layer) ------
+     Tailwind's rounded-* utilities read --radius-*, so overriding them there
+     means `rounded-lg` and `.ui-card` always agree.                        */
+
+  /* ==================== LAYOUT BREAKPOINTS ===============================
+     Deliberately few, and they exist to change LAYOUT, not size:
+        md  48rem  768px   stacked  → two-column
+        lg  64rem  1024px  hamburger → persistent nav
+        xl  80rem  1280px  secondary columns appear
+     The former --breakpoint-2k / --breakpoint-4k were removed: with auto-fit
+     grids, column count follows available space on its own, and having those
+     names in scope invites exactly the per-resolution hacks we are avoiding.
+     Inside a media query `rem` is always 16px, so these never drift as the
+     UI scale moves. Size and layout stay independent.
+     ====================================================================== */
+
+  /* ---------- Layout ---------- */
+  --container-shell:   var(--shell-max);
+  --container-prose:   var(--prose-max);
+  --container-content: var(--content-max);
+  --container-form:    var(--form-max);
+
+  /* ---------- Semantic colours: LIGHT ---------- */
+  --color-canvas:      oklch(0.985 0.003 258);
+  --color-surface:     oklch(1     0     0);
+  --color-surface-2:   oklch(0.972 0.004 258);
+  --color-surface-3:   oklch(0.945 0.006 258);
+  --color-line:        oklch(0.905 0.008 258);
+  --color-line-strong: oklch(0.845 0.012 258);
+
+  --color-ink:         oklch(0.23  0.02  258);
+  --color-ink-2:       oklch(0.46  0.017 258);
+  --color-ink-3:       oklch(0.60  0.014 258);
+  --color-ink-invert:  oklch(0.99  0     0);
+
+  --color-accent:      oklch(0.58  0.19  268);
+  --color-accent-hov:  oklch(0.53  0.19  268);
+  --color-accent-soft: oklch(0.94  0.04  268);
+  --color-accent-ink:  oklch(0.44  0.17  268);
+
+  --color-ok:          oklch(0.62  0.15  155);
+  --color-ok-soft:     oklch(0.945 0.05  155);
+  --color-warn:        oklch(0.72  0.15  75);
+  --color-warn-soft:   oklch(0.955 0.06  85);
+  --color-danger:      oklch(0.585 0.20  25);
+  --color-danger-soft: oklch(0.955 0.04  25);
+
+  /* ---------- Motion ---------- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tailwind v4 dark variant driven by a class on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Semantic colours: DARK ---------- */
+.dark {
+  --color-canvas:      oklch(0.175 0.012 265);
+  --color-surface:     oklch(0.215 0.014 265);
+  --color-surface-2:   oklch(0.255 0.016 265);
+  --color-surface-3:   oklch(0.300 0.018 265);
+  --color-line:        oklch(0.335 0.018 265);
+  --color-line-strong: oklch(0.425 0.022 265);
+
+  --color-ink:         oklch(0.965 0.004 265);
+  --color-ink-2:       oklch(0.775 0.012 265);
+  --color-ink-3:       oklch(0.630 0.015 265);
+  --color-ink-invert:  oklch(0.17  0.012 265);
+
+  --color-accent:      oklch(0.685 0.165 268);
+  --color-accent-hov:  oklch(0.735 0.160 268);
+  --color-accent-soft: oklch(0.315 0.075 268);
+  --color-accent-ink:  oklch(0.815 0.110 268);
+
+  --color-ok:          oklch(0.715 0.145 155);
+  --color-ok-soft:     oklch(0.305 0.065 155);
+  --color-warn:        oklch(0.795 0.145 80);
+  --color-warn-soft:   oklch(0.325 0.065 80);
+  --color-danger:      oklch(0.680 0.175 25);
+  --color-danger-soft: oklch(0.320 0.075 25);
+}
